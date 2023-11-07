@@ -1,4 +1,6 @@
+import { useContext, useEffect } from "react";
 import { useMapbox } from "../hooks/useMapbox";
+import { SocketContext } from "../context/SocketContext";
 
 const startingPoint = {
   lng: -122.4725,
@@ -7,8 +9,46 @@ const startingPoint = {
 }
 
 const MapsPage = () => {
+  
+  const { coords, setRef, newMarker$, markerMovement$, addMarkers } = useMapbox(startingPoint);
+  const {socket} = useContext(SocketContext)
 
-  const { coords, setRef } = useMapbox(startingPoint);
+  // Listen existing markers
+  useEffect(() => {
+    socket.on('markers-active', (markers) => {
+      for (const key of Object.keys(markers)) {
+        addMarkers(markers[key], key);
+      }
+    })
+  },[addMarkers, socket])
+
+  // Listen markers changes
+  useEffect(() => {
+    newMarker$.subscribe(marker => {
+      socket.emit('new-marker', marker);
+    })
+  }, [newMarker$, socket])
+
+  useEffect(() => {
+    markerMovement$.subscribe(marker => {
+      socket.emit('markers-update', marker)
+    })
+  },[markerMovement$, socket])
+
+  // Listen new markers
+  useEffect(() => {
+    socket.on('new-marker', (marker) => {
+      addMarkers(marker, marker.id)
+    })
+  },[socket, addMarkers])
+
+  // Listen markers movements
+  // useEffect(() => {
+  //   socket.on('markers-update', (marker) => {
+  //     // markers.current[marker.id].setLngLat([marker.lng, marker.lat])
+  //   }
+  // },[])
+
 
   return (
     <>

@@ -1,5 +1,6 @@
-import { useRef, useState, useEffect, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Subject } from "rxjs";
 import { v4 } from "uuid";
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibXJzYW5jaGV6MDIiLCJhIjoiY2xvbmp3aWk1MTBpcjJpb2F3eXIwNnc1MiJ9.R7h-XI_1PIWO2sL9jmcnXg';
@@ -17,18 +18,44 @@ export const useMapbox = (startingPoint) => {
   // Reference to markers
   const markers = useRef({});
 
-  // function to add markers
-  const addMarkers = useCallback((evt) => {
-      const { lng, lat } = evt.lngLat;
-      const marker = new mapboxgl.Marker();
-      marker.id = v4(); // TODO if marker id exists, don't add
-      marker
-        .setLngLat([lng, lat])
-        .addTo(map.current)
-        .setDraggable(true);
-      markers.current[marker.id] = marker;
+  // Rxjs Observables
+  const markerMovement = useRef( new Subject());
+  const newMarker = useRef( new Subject());
 
+  // function to add markers
+  const addMarkers = useCallback((evt, id) => {
+    const { lng, lat } = evt.lngLat || evt;
+    const marker = new mapboxgl.Marker();
+    marker.id = id ?? v4();
+    marker
+      .setLngLat([lng, lat])
+      .addTo(map.current)
+      .setDraggable(true);
+    markers.current[marker.id] = marker;
+    
+    if (!id ) {
+      newMarker.current.next({
+        id: marker.id,
+        lng,
+        lat
+      });
+    }
+
+    // Listen marker movements
+    marker.on('drag', ({target}) => {
+      const { id } = target;
+      const { lng, lat } = target.getLngLat();
+      markerMovement.current.next({
+        id,
+        lng,
+        lat
+      });
+    })
   }, []);
+
+  const updateMarker = useCallback(() => {
+    
+  },[])
 
   // Initialize map
   useEffect(() => {
@@ -62,9 +89,12 @@ export const useMapbox = (startingPoint) => {
   }, [addMarkers])
 
   return {
+    addMarkers,
     coords,
-    setRef,
     markers,
-    addMarkers
+    markerMovement$: markerMovement.current,
+    newMarker$: newMarker.current,
+    updateMarker,
+    setRef,
   }
 }
