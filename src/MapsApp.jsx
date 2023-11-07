@@ -1,6 +1,8 @@
+import MapsPage from "./pages/MapsPage"
+
 const MapsApp = () => {
   return (
-    <div>MapsApp</div>
+    <MapsPage />
   )
 }
 
