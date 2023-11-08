@@ -10,7 +10,7 @@ const startingPoint = {
 
 const MapsPage = () => {
   
-  const { coords, setRef, newMarker$, markerMovement$, addMarkers } = useMapbox(startingPoint);
+  const { coords, setRef, newMarker$, markerMovement$, addMarkers, updateMarker } = useMapbox(startingPoint);
   const {socket} = useContext(SocketContext)
 
   // Listen existing markers
@@ -43,11 +43,11 @@ const MapsPage = () => {
   },[socket, addMarkers])
 
   // Listen markers movements
-  // useEffect(() => {
-  //   socket.on('markers-update', (marker) => {
-  //     // markers.current[marker.id].setLngLat([marker.lng, marker.lat])
-  //   }
-  // },[])
+  useEffect(() => {
+    socket.on('markers-update', (marker) => {
+      updateMarker(marker);
+    })
+  },[socket, updateMarker])
 
 
   return (

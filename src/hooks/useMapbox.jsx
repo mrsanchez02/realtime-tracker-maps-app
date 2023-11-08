@@ -53,8 +53,8 @@ export const useMapbox = (startingPoint) => {
     })
   }, []);
 
-  const updateMarker = useCallback(() => {
-    
+  const updateMarker = useCallback(( {id, lng, lat} ) => {
+    markers.current[id].setLngLat([lng, lat]);
   },[])
 
   // Initialize map
